@@ -15,9 +15,31 @@ fi
 
 cd $1
 
+# create .profile.d directory for setting PATH
+mkdir -p ".profile.d"
+
+# create vendor directory in case it does not exist
+mkdir -p "vendor"
+cd "vendor"
+
 while read url; do
   if [ -n "$url" ]; then # incase ensure_newline_at_eof_on_save is enabled
     echo Vendoring $url | indent
-    curl -L --silent $url | tar xz
+    curl -L --silent "$url" | tar xz
+
+    filename=`basename "$url"`
+    filename=${filename%%.*}
+
+    if [ -d "$filename" ]; then
+        if [ -d "bin" ]; then
+            echo "Found bin for $filename. Adding it to PATH." | indent
+            echo "export PATH=\"\$PATH:$PWD/$filename/bin\"" >> $1/.profile.d/vendorbinaries.sh
+        fi
+
+        if [ -d "lib" ]; then
+            echo "Found lib for $filename. Adding it to LD_LIBRARY_PATH." | indent
+            echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:$PWD/$filename/lib\"" >> $1/.profile.d/vendorbinaries.sh
+        fi
+    fi
   fi
 done < .vendor_urls
