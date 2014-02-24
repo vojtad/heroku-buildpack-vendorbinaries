@@ -42,4 +42,4 @@ while read url; do
         fi
     fi
   fi
-done < .vendor_urls
+done < $1/.vendor_urls
