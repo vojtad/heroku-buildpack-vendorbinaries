@@ -31,12 +31,12 @@ while read url; do
     filename=${filename%%.*}
 
     if [ -d "$filename" ]; then
-        if [ -d "bin" ]; then
+        if [ -d "$filename/bin" ]; then
             echo "Found bin for $filename. Adding it to PATH." | indent
             echo "export PATH=\"\$PATH:$PWD/$filename/bin\"" >> $1/.profile.d/vendorbinaries.sh
         fi
 
-        if [ -d "lib" ]; then
+        if [ -d "$filename/lib" ]; then
             echo "Found lib for $filename. Adding it to LD_LIBRARY_PATH." | indent
             echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:$PWD/$filename/lib\"" >> $1/.profile.d/vendorbinaries.sh
         fi
