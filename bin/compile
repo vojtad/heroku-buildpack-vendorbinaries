@@ -1,5 +1,10 @@
 #!/bin/bash
 
+BUILD_DIR="$1"
+CACHE_DIR="$2"
+
+VENDOR_DIR="$BUILD_DIR/vendor"
+PROFILE_D_DIR="$BUILD_DIR/.profile.d"
 
 indent() {
   sed -u 's/^/       /'
@@ -16,29 +21,48 @@ fi
 cd $1
 
 # create .profile.d directory for setting PATH
-mkdir -p ".profile.d"
+mkdir -p "$PROFILE_D_DIR"
+rm -fr "$PROFILE_D_DIR/vendorbinaries.sh"
 
 # create vendor directory in case it does not exist
-mkdir -p "vendor"
-cd "vendor"
+mkdir -p "$VENDOR_DIR"
 
 while read url; do
   if [ -n "$url" ]; then # incase ensure_newline_at_eof_on_save is enabled
-    echo Vendoring $url | indent
-    curl -L --silent "$url?$SOURCE_VERSION" | tar xz
+    echo "Vendoring $url..." | indent
 
     filename=`basename "$url"`
-    filename=${filename%%.*}
+    dirname="${filename%%.*}"
 
-    if [ -d "$filename" ]; then
-        if [ -d "$filename/bin" ]; then
-            echo "Found bin for $filename. Adding it to PATH." | indent
-            echo "export PATH=\"\$PATH:/app/vendor/$filename/bin\"" >> $1/.profile.d/vendorbinaries.sh
+    rm -fr "$CACHE_DIR/$filename" "$CACHE_DIR/$dirname" "$VENDOR_DIR/$dirname"
+
+    curl -L -s -o "$CACHE_DIR/$filename" "$url?$SOURCE_VERSION"
+
+    tar_options="x"
+    mime_type=`file -b --mime-type "$CACHE_DIR/$filename"`
+    if [ "$mime_type" == "application/x-bzip2" ]; then
+        tar_options="${tar_options}j"
+    elif [ "$mime_type" == "application/x-xz" ]; then
+        tar_options="${tar_options}J"
+    elif [ "$mime_type" == "application/x-gzip" ]; then
+        tar_options="${tar_options}z"
+    else
+        echo "Unknown archive type '$mime_type' for '$url'." | indent
+        exit 1
+    fi
+
+    tar "${tar_options}f" "$CACHE_DIR/$filename" -C "$CACHE_DIR" || exit 2
+    mv "$CACHE_DIR/$dirname" "$VENDOR_DIR/$dirname" || exit 3
+
+    if [ -d "$VENDOR_DIR/$dirname" ]; then
+        if [ -d "$VENDOR_DIR/$dirname/bin" ]; then
+            echo "Found bin in $VENDOR_DIR/$dirname. Adding it to PATH." | indent
+            echo "export PATH=\"\$PATH:$VENDOR_DIR/$dirname/bin\"" >> "$PROFILE_D_DIR/vendorbinaries.sh"
         fi
 
-        if [ -d "$filename/lib" ]; then
-            echo "Found lib for $filename. Adding it to LD_LIBRARY_PATH." | indent
-            echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:/app/vendor/$filename/lib\"" >> $1/.profile.d/vendorbinaries.sh
+        if [ -d "$VENDOR_DIR/$dirname/lib" ]; then
+            echo "Found lib in $VENDOR_DIR/$dirname. Adding it to LD_LIBRARY_PATH." | indent
+            echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:$VENDOR_DIR/$dirname/lib\"" >> "$PROFILE_D_DIR/vendorbinaries.sh"
         fi
     fi
   fi
