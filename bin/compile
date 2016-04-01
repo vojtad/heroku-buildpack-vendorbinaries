@@ -32,37 +32,40 @@ while read url; do
     echo "Vendoring $url..." | indent
 
     filename=`basename "$url"`
-    dirname="${filename%%.*}"
-
-    rm -fr "$CACHE_DIR/$filename" "$CACHE_DIR/$dirname" "$VENDOR_DIR/$dirname"
-
+    rm -fr "$CACHE_DIR/$filename"
     curl -L -s -o "$CACHE_DIR/$filename" "$url?$SOURCE_VERSION"
 
     tar_options="x"
     mime_type=`file -b --mime-type "$CACHE_DIR/$filename"`
     if [ "$mime_type" == "application/x-bzip2" -o "$mime_type" == "application/bzip2" ]; then
         tar_options="${tar_options}j"
+        extension=".tar.bz2"
     elif [ "$mime_type" == "application/x-xz" -o "$mime_type" == "application/xz" ]; then
         tar_options="${tar_options}J"
+        extension=".tar.xz"
     elif [ "$mime_type" == "application/x-gzip" -o "$mime_type" == "application/gzip" ]; then
         tar_options="${tar_options}z"
+        extension=".tar.gz"
     else
         echo "Unknown archive type '$mime_type' for '$url'." | indent
         exit 1
     fi
+
+    dirname=`basename "$url" "$extension"`
+    rm -fr "$CACHE_DIR/$dirname" "$VENDOR_DIR/$dirname"
 
     tar "${tar_options}f" "$CACHE_DIR/$filename" -C "$CACHE_DIR" || exit 2
     mv "$CACHE_DIR/$dirname" "$VENDOR_DIR/$dirname" || exit 3
 
     if [ -d "$VENDOR_DIR/$dirname" ]; then
         if [ -d "$VENDOR_DIR/$dirname/bin" ]; then
-            echo "Found bin in $VENDOR_DIR/$dirname. Adding it to PATH." | indent
-            echo "export PATH=\"\$PATH:$VENDOR_DIR/$dirname/bin\"" >> "$PROFILE_D_DIR/vendorbinaries.sh"
+            echo "Found bin in $dirname. Adding it to PATH." | indent
+            echo "export PATH=\"\$PATH:$HOME/vendor/$dirname/bin\"" >> "$PROFILE_D_DIR/vendorbinaries.sh"
         fi
 
         if [ -d "$VENDOR_DIR/$dirname/lib" ]; then
-            echo "Found lib in $VENDOR_DIR/$dirname. Adding it to LD_LIBRARY_PATH." | indent
-            echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:$VENDOR_DIR/$dirname/lib\"" >> "$PROFILE_D_DIR/vendorbinaries.sh"
+            echo "Found lib in $dirname. Adding it to LD_LIBRARY_PATH." | indent
+            echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:$HOME/vendor/$dirname/lib\"" >> "$PROFILE_D_DIR/vendorbinaries.sh"
         fi
     fi
   fi
