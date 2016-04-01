@@ -40,11 +40,11 @@ while read url; do
 
     tar_options="x"
     mime_type=`file -b --mime-type "$CACHE_DIR/$filename"`
-    if [ "$mime_type" == "application/x-bzip2" ]; then
+    if [ "$mime_type" == "application/x-bzip2" -o "$mime_type" == "application/bzip2" ]; then
         tar_options="${tar_options}j"
-    elif [ "$mime_type" == "application/x-xz" ]; then
+    elif [ "$mime_type" == "application/x-xz" -o "$mime_type" == "application/xz" ]; then
         tar_options="${tar_options}J"
-    elif [ "$mime_type" == "application/x-gzip" ]; then
+    elif [ "$mime_type" == "application/x-gzip" -o "$mime_type" == "application/gzip" ]; then
         tar_options="${tar_options}z"
     else
         echo "Unknown archive type '$mime_type' for '$url'." | indent
