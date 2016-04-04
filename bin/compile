@@ -10,6 +10,11 @@ indent() {
   sed -u 's/^/       /'
 }
 
+fail() {
+  echo "$1" >&2
+  exit 1
+}
+
 echo "-----> Found a .vendor_urls file"
 
 # Bail early but noisily
@@ -33,7 +38,7 @@ while read url; do
 
     filename=`basename "$url"`
     rm -fr "$CACHE_DIR/$filename"
-    curl -L -s -o "$CACHE_DIR/$filename" "$url?$SOURCE_VERSION"
+    curl -L -s -o "$CACHE_DIR/$filename" "$url?$SOURCE_VERSION" || fail "Downloading '$url?$SOURCE_VERSION' to '$CACHE_DIR/$filename"' failed.'
 
     tar_options="x"
     mime_type=`file -b --mime-type "$CACHE_DIR/$filename"`
