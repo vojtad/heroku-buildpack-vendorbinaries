@@ -23,7 +23,7 @@ if [ ! -s $1/.vendor_urls ]; then
   exit 0
 fi
 
-cd $1
+mkdir -p "$CACHE_DIR"
 
 # create .profile.d directory for setting PATH
 mkdir -p "$PROFILE_D_DIR"
@@ -74,4 +74,4 @@ while read url; do
         fi
     fi
   fi
-done < $1/.vendor_urls
+done < "$BUILD_DIR/.vendor_urls"
