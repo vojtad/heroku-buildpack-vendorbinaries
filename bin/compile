@@ -11,7 +11,7 @@ indent() {
 }
 
 fail() {
-  echo "$1" >&2
+  echo "$1" | indent >&2
   exit 1
 }
 
@@ -52,15 +52,14 @@ while read url; do
         tar_options="${tar_options}z"
         extension=".tar.gz"
     else
-        echo "Unknown archive type '$mime_type' for '$url'." | indent
-        exit 1
+        fail "Unknown archive type '$mime_type' for '$url'."
     fi
 
     dirname=`basename "$url" "$extension"`
     rm -fr "$CACHE_DIR/$dirname" "$VENDOR_DIR/$dirname"
 
-    tar "${tar_options}f" "$CACHE_DIR/$filename" -C "$CACHE_DIR" || exit 2
-    mv "$CACHE_DIR/$dirname" "$VENDOR_DIR/$dirname" || exit 3
+    tar "${tar_options}f" "$CACHE_DIR/$filename" -C "$CACHE_DIR" || fail "Extracting '$CACHE_DIR/$filename' failed (tar options '${tar_options}')."
+    mv "$CACHE_DIR/$dirname" "$VENDOR_DIR/$dirname" || fail 'Moving '$CACHE_DIR/$dirname' to '$VENDOR_DIR/$dirname' failed.'
 
     if [ -d "$VENDOR_DIR/$dirname" ]; then
         if [ -d "$VENDOR_DIR/$dirname/bin" ]; then
