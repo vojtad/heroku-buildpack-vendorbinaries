@@ -63,13 +63,13 @@ while read url; do
 
     if [ -d "$VENDOR_DIR/$dirname" ]; then
         if [ -d "$VENDOR_DIR/$dirname/bin" ]; then
-            echo "Found bin in $dirname. Adding it to PATH." | indent
-            echo "export PATH=\"\$PATH:$HOME/vendor/$dirname/bin\"" >> "$PROFILE_D_DIR/vendorbinaries.sh"
+            echo "Found bin in $dirname. Prepending it before PATH." | indent
+            echo "export PATH=\"$HOME/vendor/$dirname/bin:\$PATH\"" >> "$PROFILE_D_DIR/vendorbinaries.sh"
         fi
 
         if [ -d "$VENDOR_DIR/$dirname/lib" ]; then
-            echo "Found lib in $dirname. Adding it to LD_LIBRARY_PATH." | indent
-            echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:$HOME/vendor/$dirname/lib\"" >> "$PROFILE_D_DIR/vendorbinaries.sh"
+            echo "Found lib in $dirname. Prepending it before LD_LIBRARY_PATH." | indent
+            echo "export LD_LIBRARY_PATH=\"$HOME/vendor/$dirname/lib:\$LD_LIBRARY_PATH\"" >> "$PROFILE_D_DIR/vendorbinaries.sh"
         fi
     fi
   fi
